@@ -27,24 +27,35 @@ class Client:
         self.client_secret = kwargs.get('client_secret')
         self.query_dict = { 'key' : self.client_id }
 
-    def authenticate(self, access_token=None, access_token_secret=None):
-        """ Go through Open Auththenication process. """
+    def authenticate(self, access_token, access_token_secret):
+        """ Authenticate with previously retrieved access credentials. """
+        self.access_token = access_token
+        self.access_token_secret = access_token_secret
         self.session = GoodreadsSession(self.client_id, self.client_secret,
                                        access_token, access_token_secret)
+        self.session.oath_resume()
 
-        if access_token and access_token_secret:
-            self.session.oath_resume()
-        else: # Access not yet granted, allow via browser
-            url = self.session.oath_start()
-            webbrowser.open(url)
-            while raw_input('Have you authorized me? (y/n) ') != 'y':
-                pass
-            self.session.oauth_finish()
+    def get_authentication_url(self):
+        """
+        Start the authentication process. User must visit this url to
+        authorize client's use of their account.
+        """
+        self.session = GoodreadsSession(self.client_id, self.client_secret)
+        url = self.session.oath_start()
+        return url
+
+    def finish_authentication(self):
+        """
+        Use request_token_secret to get access_token and secret from Goodreads.
+        """
+        self.session.oauth_finish()
 
     def get_access_tokens():
-        """ Return access tokens for storage, so that sessions can be 
+        """
+        Return access tokens for storage, so that sessions can be 
         resumed easily.
-        Returns: (access_token, access_token_secret) """
+        :Returns: (access_token, access_token_secret)
+        """
         if not self.session:
             raise GoodreadsSessionError("No authenticated session.")
         return self.session.access_token, self.session.access_token_secret
@@ -81,8 +92,10 @@ class Client:
         return response
 
     def get_friends(self, user_id, num=MAX_INT):
-        """ Get pages of user's friends list. (30 per page)
-        Returns: ((id, name),) """
+        """
+        Get pages of user's friends list. (30 per page)
+        :Returns: ((id, name),)
+        """
         if not self.session:
             raise GoodreadsSessionError("No authenticated session.")
 

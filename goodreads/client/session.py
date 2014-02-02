@@ -23,7 +23,7 @@ class GoodreadsSession:
 
     def oath_start(self):
         """ Start oauth, get tokens return authorization url"""
-        # Create auth service
+        # Create auth service to handle authorization requests
         goodreads_service = OAuth1Service(
             consumer_key=self.client_key,
             consumer_secret=self.client_secret,
@@ -39,7 +39,6 @@ class GoodreadsSession:
             goodreads_service.get_request_token(header_auth=True)
 
         authorize_url = goodreads_service.get_authorize_url(self.request_token)
-        print 'To authorize access visit: ' + authorize_url
 
         # Store service for finishing
         self.goodreads_service = goodreads_service
